@@ -37,6 +37,9 @@ class RnPdfKingModule : Module() {
                   "pageCount" to pageCount
               ))
           }
+          pdfKing.onUnsupportedFile = {
+              this@RnPdfKingModule.sendEvent("onPdfLoadError", mapOf("message" to "Unsupported or corrupt PDF file"))
+          }
       }
       
       // Check for initial intent
@@ -68,7 +71,9 @@ class RnPdfKingModule : Module() {
             if (intent.action == Intent.ACTION_VIEW) {
                 val uri = intent.data
                 if (uri != null) {
-                    PdfKingManager.getInstance().handleUriSelection(uri)
+                    CoroutineScope(Dispatchers.Main).launch {
+                        PdfKingManager.getInstance().handleUriSelection(uri)
+                    }
                     return@AsyncFunction true
                 }
             }

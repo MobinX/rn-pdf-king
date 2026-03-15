@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Button, ActivityIndicator, Dimensions, Platform, Linking } from 'react-native';
+import { StyleSheet, View, Text, Button, ActivityIndicator, Dimensions, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { FlashList } from '@shopify/flash-list';
 import { runOnJS, useSharedValue } from 'react-native-reanimated';
