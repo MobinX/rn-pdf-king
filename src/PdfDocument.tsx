@@ -38,6 +38,11 @@ export const PdfDocumentProvider: React.FC<PdfDocumentProps> = ({
 
   useEffect(() => {
     // Register listeners
+    const startedSubscription = RnPdfKingModule.addListener('onPdfLoadStarted', () => {
+      setLoading(true);
+      setError(null);
+    });
+
     const successSubscription = RnPdfKingModule.addListener('onPdfLoadSuccess', (event) => {
       setLoading(false);
       setPageCount(event.pageCount);
@@ -54,6 +59,7 @@ export const PdfDocumentProvider: React.FC<PdfDocumentProps> = ({
     });
 
     return () => {
+      startedSubscription.remove();
       successSubscription.remove();
       errorSubscription.remove();
     };
@@ -61,7 +67,6 @@ export const PdfDocumentProvider: React.FC<PdfDocumentProps> = ({
 
   const pickFile = async () => {
     try {
-      setLoading(true);
       setError(null);
       await RnPdfKingModule.pickFile();
     } catch (e: any) {
@@ -72,7 +77,6 @@ export const PdfDocumentProvider: React.FC<PdfDocumentProps> = ({
 
   const loadPdf = async (path: string) => {
     try {
-      setLoading(true);
       setError(null);
       await RnPdfKingModule.loadPdf(path);
     } catch (e: any) {

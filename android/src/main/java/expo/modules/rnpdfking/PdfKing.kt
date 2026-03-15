@@ -90,6 +90,7 @@ class PdfKing(private val context: Context) {
     }
     
     // Callbacks
+    var onFileLoadStarted: (() -> Unit)? = null
     var onFileLoadSuccess: ((String, String, Int) -> Unit)? = null // Path/UriString, Name, PageCount
     var onUnsupportedFile: (() -> Unit)? = null
 
@@ -102,6 +103,7 @@ class PdfKing(private val context: Context) {
     
     // Helper to process Uri if passed from Activity
     suspend fun handleUriSelection(uri: Uri) {
+        onFileLoadStarted?.invoke()
         var success = false
         var fileName = ""
         var filePath = ""

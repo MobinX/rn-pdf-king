@@ -8,6 +8,7 @@ export type Highlight = {
 };
 
 export type RnPdfKingModuleEvents = {
+  onPdfLoadStarted: () => void;
   onPdfLoadSuccess: (event: { filePath: string; fileName: string; pageCount: number }) => void;
   onPdfLoadError: (event: { message: string }) => void;
 };

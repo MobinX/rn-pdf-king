@@ -20,12 +20,23 @@ class RnPdfKingModule : Module() {
     Name("RnPdfKing")
 
     // Events
-    Events("onPdfLoadSuccess", "onPdfLoadError")
+    Events("onPdfLoadStarted", "onPdfLoadSuccess", "onPdfLoadError")
 
     OnCreate {
       val context = appContext.reactContext
       if (context != null) {
           PdfKingManager.initialize(context)
+          val pdfKing = PdfKingManager.getInstance()
+          pdfKing.onFileLoadStarted = {
+              this@RnPdfKingModule.sendEvent("onPdfLoadStarted", mapOf())
+          }
+          pdfKing.onFileLoadSuccess = { filePath, fileName, pageCount ->
+              this@RnPdfKingModule.sendEvent("onPdfLoadSuccess", mapOf(
+                  "filePath" to filePath,
+                  "fileName" to fileName,
+                  "pageCount" to pageCount
+              ))
+          }
       }
       
       // Check for initial intent
@@ -33,10 +44,23 @@ class RnPdfKingModule : Module() {
           if (intent.action == Intent.ACTION_VIEW) {
               val uri = intent.data
               if (uri != null) {
-                  handleUriSelection(uri)
+                  CoroutineScope(Dispatchers.Main).launch {
+                      PdfKingManager.getInstance().handleUriSelection(uri)
+                  }
               }
           }
       }
+    }
+
+    OnNewIntent { intent ->
+        if (intent.action == Intent.ACTION_VIEW) {
+            val uri = intent.data
+            if (uri != null) {
+                CoroutineScope(Dispatchers.Main).launch {
+                    PdfKingManager.getInstance().handleUriSelection(uri)
+                }
+            }
+        }
     }
     
     AsyncFunction("checkInitialIntent") {
@@ -44,7 +68,7 @@ class RnPdfKingModule : Module() {
             if (intent.action == Intent.ACTION_VIEW) {
                 val uri = intent.data
                 if (uri != null) {
-                    handleUriSelection(uri)
+                    PdfKingManager.getInstance().handleUriSelection(uri)
                     return@AsyncFunction true
                 }
             }
@@ -56,7 +80,9 @@ class RnPdfKingModule : Module() {
         if (payload.requestCode == FILE_PICKER_REQUEST_CODE && payload.resultCode == Activity.RESULT_OK) {
             val uri = payload.data?.data
             if (uri != null) {
-                handleUriSelection(uri)
+                CoroutineScope(Dispatchers.Main).launch {
+                    PdfKingManager.getInstance().handleUriSelection(uri)
+                }
             }
         }
     }
@@ -75,14 +101,15 @@ class RnPdfKingModule : Module() {
              CoroutineScope(Dispatchers.IO).launch {
                  try {
                      val pdfKing = PdfKingManager.getInstance()
+                     withContext(Dispatchers.Main) {
+                         pdfKing.onFileLoadStarted?.invoke()
+                     }
                      pdfKing.loadPdf(file)
-                     val count = pdfKing.getPageCountSync() // Updated to Sync method
+                     val count = pdfKing.getPageCountSync()
                      
-                     this@RnPdfKingModule.sendEvent("onPdfLoadSuccess", mapOf(
-                        "filePath" to path,
-                        "fileName" to file.name,
-                        "pageCount" to count
-                     ))
+                     withContext(Dispatchers.Main) {
+                         pdfKing.onFileLoadSuccess?.invoke(path, file.name, count)
+                     }
                  } catch (e: Exception) {
                      this@RnPdfKingModule.sendEvent("onPdfLoadError", mapOf("message" to (e.message ?: "Unknown error")))
                  }
@@ -123,44 +150,5 @@ class RnPdfKingModule : Module() {
 
       Events("onSelectionChanged", "onSelectionStarted", "onSelectionEnded", "onPreDefinedHighlightClick")
     }
-  }
-
-  private fun handleUriSelection(uri: Uri) {
-      CoroutineScope(Dispatchers.IO).launch {
-          try {
-             val context = appContext.reactContext ?: return@launch
-             val pdfKing = PdfKingManager.getInstance()
-             
-             // Resolve name
-             var fileName = "unknown.pdf"
-             context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    if (index != -1) fileName = cursor.getString(index)
-                }
-             }
-
-             // Copy to cache
-             val cacheFile = File(context.cacheDir, "temp_${System.currentTimeMillis()}.pdf")
-             context.contentResolver.openInputStream(uri)?.use { input ->
-                 cacheFile.outputStream().use { output ->
-                     input.copyTo(output)
-                 }
-             }
-             
-             // Load
-             pdfKing.loadPdf(cacheFile)
-             val count = pdfKing.getPageCountSync()
-             
-             this@RnPdfKingModule.sendEvent("onPdfLoadSuccess", mapOf(
-                 "filePath" to cacheFile.absolutePath,
-                 "fileName" to fileName,
-                 "pageCount" to count
-             ))
-          } catch (e: Exception) {
-              e.printStackTrace()
-              this@RnPdfKingModule.sendEvent("onPdfLoadError", mapOf("message" to (e.message ?: "Unknown error")))
-          }
-      }
   }
 }

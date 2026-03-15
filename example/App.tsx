@@ -49,13 +49,6 @@ const PdfViewer = () => {
     // Check initial intent on mount
     if (Platform.OS === 'android') {
       RnPdfKing.checkInitialIntent();
-      
-      const subscription = Linking.addEventListener('url', (event) => {
-        if (event.url) {
-          RnPdfKing.checkInitialIntent();
-        }
-      });
-      return () => subscription.remove();
     }
   }, []);
 
