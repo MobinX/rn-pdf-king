@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, Button, ActivityIndicator, Dimensions, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, Button, ActivityIndicator, Dimensions, Platform, Linking } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { FlashList } from '@shopify/flash-list';
 import { runOnJS, useSharedValue } from 'react-native-reanimated';
-import { PdfDocumentProvider, usePdfDocument, PdfPage } from 'rn-pdf-king';
+import RnPdfKing, { PdfDocumentProvider, usePdfDocument, PdfPage } from 'rn-pdf-king';
 import Zoom from 'react-native-zoom-reanimated';
 
 const ZoomablePage = ({ 
@@ -44,6 +44,20 @@ const PdfViewer = () => {
   const [width, setWidth] = useState(Dimensions.get('window').width);
   const [isSelecting, setIsSelecting] = useState(false);
   const itemHeight = width * 1.414;
+
+  useEffect(() => {
+    // Check initial intent on mount
+    if (Platform.OS === 'android') {
+      RnPdfKing.checkInitialIntent();
+      
+      const subscription = Linking.addEventListener('url', (event) => {
+        if (event.url) {
+          RnPdfKing.checkInitialIntent();
+        }
+      });
+      return () => subscription.remove();
+    }
+  }, []);
 
   const renderItem = ({ item }: { item: number }) => {
     return (

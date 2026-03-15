@@ -27,8 +27,31 @@ class RnPdfKingModule : Module() {
       if (context != null) {
           PdfKingManager.initialize(context)
       }
+      
+      // Check for initial intent
+      appContext.currentActivity?.intent?.let { intent ->
+          if (intent.action == Intent.ACTION_VIEW) {
+              val uri = intent.data
+              if (uri != null) {
+                  handleUriSelection(uri)
+              }
+          }
+      }
     }
     
+    AsyncFunction("checkInitialIntent") {
+        appContext.currentActivity?.intent?.let { intent ->
+            if (intent.action == Intent.ACTION_VIEW) {
+                val uri = intent.data
+                if (uri != null) {
+                    handleUriSelection(uri)
+                    return@AsyncFunction true
+                }
+            }
+        }
+        return@AsyncFunction false
+    }
+
     OnActivityResult { _, payload ->
         if (payload.requestCode == FILE_PICKER_REQUEST_CODE && payload.resultCode == Activity.RESULT_OK) {
             val uri = payload.data?.data

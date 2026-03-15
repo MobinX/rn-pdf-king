@@ -23,7 +23,29 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "expo.modules.rnpdfking.example"
+      "package": "expo.modules.rnpdfking.example",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "file",
+              "mimeType": "application/pdf"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/pdf"
+            },
+            {
+              "mimeType": "application/pdf"
+            }
+          ],
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

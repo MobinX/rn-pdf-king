@@ -8,6 +8,7 @@ declare class RnPdfKingModule extends NativeModule<RnPdfKingModuleEvents> {
   setValueAsync(value: string): Promise<void>;
   pickFile(): Promise<void>;
   loadPdf(path: string): Promise<void>;
+  checkInitialIntent(): Promise<boolean>;
 }
 
 // This call loads the native module object from the JSI.
