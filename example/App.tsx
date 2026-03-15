@@ -17,15 +17,24 @@ const ZoomablePage = ({
   itemHeight: number, 
   setIsSelecting: (v: boolean) => void 
 }) => {
+  const highlights = [
+    { id: 'h1', startIndex: 10, endIndex: 50, color: 'rgba(255, 255, 0, 0.5)' },
+    { id: 'h2', startIndex: 100, endIndex: 150, color: '#ff000088' },
+  ]
+
   return (
     <PdfPage 
       pageNo={pageNo} 
       width={width}
       height={itemHeight}
+      preDefinedHighlights={highlights}
+      handleColor="green"
+      selectionColor="rgba(0, 255, 0, 0.3)"
       style={{ width: width, height: itemHeight }} 
       onSelectionChanged={(e) => console.log('Selection:', e.nativeEvent.selectedText)}
       onSelectionStarted={() => setIsSelecting(true)}
       onSelectionEnded={() => setIsSelecting(false)}
+      onPreDefinedHighlightClick={(e) => alert(`Highlight clicked: ${e.nativeEvent.id}`)}
     />
   );
 };

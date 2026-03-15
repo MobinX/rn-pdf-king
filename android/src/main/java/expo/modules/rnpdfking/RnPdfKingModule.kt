@@ -90,7 +90,15 @@ class RnPdfKingModule : Module() {
         view.setHighlights(highlights)
       }
 
-      Events("onSelectionChanged", "onSelectionStarted", "onSelectionEnded")
+      Prop("handleColor") { view: RnPdfKingView, color: Int ->
+        view.setHandleColor(color)
+      }
+
+      Prop("selectionColor") { view: RnPdfKingView, color: Int ->
+        view.setSelectionColor(color)
+      }
+
+      Events("onSelectionChanged", "onSelectionStarted", "onSelectionEnded", "onPreDefinedHighlightClick")
     }
   }
 

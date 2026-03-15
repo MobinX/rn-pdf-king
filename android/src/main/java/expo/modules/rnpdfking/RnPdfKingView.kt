@@ -26,6 +26,7 @@ class RnPdfKingView(context: Context, appContext: AppContext) : ExpoView(context
     private val onSelectionChanged by EventDispatcher()
     private val onSelectionStarted by EventDispatcher()
     private val onSelectionEnded by EventDispatcher()
+    private val onPreDefinedHighlightClick by EventDispatcher()
 
     private var pageNo = 0
     private var viewWidth = 0
@@ -60,8 +61,20 @@ class RnPdfKingView(context: Context, appContext: AppContext) : ExpoView(context
         pdfPageView.onSelectionEnd = {
             onSelectionEnded(mapOf())
         }
+
+        pdfPageView.onHighlightClick = { id ->
+            onPreDefinedHighlightClick(mapOf("id" to id))
+        }
         
         addView(pdfPageView)
+    }
+
+    fun setHandleColor(color: Int) {
+        pdfPageView.handleColor = color
+    }
+
+    fun setSelectionColor(color: Int) {
+        pdfPageView.selectionColor = color
     }
     
     private fun render() {
@@ -124,7 +137,14 @@ class RnPdfKingView(context: Context, appContext: AppContext) : ExpoView(context
             val id = map["id"] as? String
             val start = (map["startIndex"] as? Number)?.toInt()
             val end = (map["endIndex"] as? Number)?.toInt()
-            val color = (map["color"] as? Number)?.toInt()
+            
+            // Handle color specifically, it might be Double, Int, or Long
+            val colorVal = map["color"]
+            val color = if (colorVal is Number) {
+                colorVal.toInt()
+            } else {
+                null
+            }
             
             if (id != null && start != null && end != null && color != null) {
                 com.mobinx.pdfking.Highlight(id, start, end, color)

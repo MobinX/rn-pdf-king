@@ -1,25 +1,27 @@
-import type { StyleProp, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle, NativeSyntheticEvent, ColorValue } from 'react-native';
 
-export type OnLoadEventPayload = {
-  url: string;
+export type Highlight = {
+  id: string;
+  startIndex: number;
+  endIndex: number;
+  color: ColorValue | number;
 };
 
 export type RnPdfKingModuleEvents = {
-  onChange: (params: ChangeEventPayload) => void;
   onPdfLoadSuccess: (event: { filePath: string; fileName: string; pageCount: number }) => void;
   onPdfLoadError: (event: { message: string }) => void;
 };
 
-export type ChangeEventPayload = {
-  value: string;
-};
-
 export type RnPdfKingViewProps = {
   pageNo: number;
-  width?: number;
-  height?: number;
+  pdfWidth?: number;
+  pdfHeight?: number;
+  preDefinedHighlights?: Highlight[];
+  handleColor?: ColorValue | number;
+  selectionColor?: ColorValue | number;
   style?: StyleProp<ViewStyle>;
-  onSelectionChanged?: (event: { nativeEvent: { selectedText: string } }) => void;
-  onSelectionStarted?: () => void;
-  onSelectionEnded?: () => void;
+  onSelectionChanged?: (event: NativeSyntheticEvent<{ selectedText: string }>) => void;
+  onSelectionStarted?: (event: NativeSyntheticEvent<{}>) => void;
+  onSelectionEnded?: (event: NativeSyntheticEvent<{}>) => void;
+  onPreDefinedHighlightClick?: (event: NativeSyntheticEvent<{ id: string }>) => void;
 };
