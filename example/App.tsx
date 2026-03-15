@@ -1,25 +1,52 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, Button, ActivityIndicator, Dimensions, Platform } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { FlashList } from '@shopify/flash-list';
+import { runOnJS, useSharedValue } from 'react-native-reanimated';
 import { PdfDocumentProvider, usePdfDocument, PdfPage } from 'rn-pdf-king';
+import Zoom from 'react-native-zoom-reanimated';
+
+const ZoomablePage = ({ 
+  pageNo, 
+  width, 
+  itemHeight, 
+  setIsSelecting 
+}: { 
+  pageNo: number, 
+  width: number, 
+  itemHeight: number, 
+  setIsSelecting: (v: boolean) => void 
+}) => {
+  return (
+    <PdfPage 
+      pageNo={pageNo} 
+      width={width}
+      height={itemHeight}
+      style={{ width: width, height: itemHeight }} 
+      onSelectionChanged={(e) => console.log('Selection:', e.nativeEvent.selectedText)}
+      onSelectionStarted={() => setIsSelecting(true)}
+      onSelectionEnded={() => setIsSelecting(false)}
+    />
+  );
+};
 
 const PdfViewer = () => {
   const { loading, pageCount, filePath, fileName, pickFile, error } = usePdfDocument();
   const [width, setWidth] = useState(Dimensions.get('window').width);
+  const [isSelecting, setIsSelecting] = useState(false);
   const itemHeight = width * 1.414;
 
   const renderItem = ({ item }: { item: number }) => {
     return (
-    <View style={{ width: width, height: itemHeight, marginBottom: 20 }}> 
-      <PdfPage 
-        pageNo={item} 
-        width={width}
-        height={itemHeight}
-        style={{ width: '100%', height: '100%' }} 
-        onSelectionChanged={(e) => console.log('Selection:', e.nativeEvent.selectedText)}
-      />
-      <Text style={{ textAlign: 'center', marginTop: 5 }}>Page {item}</Text>
-    </View>
+      <View style={{ width: width, height: itemHeight, marginBottom: 20, overflow: 'hidden' }}> 
+        <ZoomablePage 
+          pageNo={item} 
+          width={width} 
+          itemHeight={itemHeight} 
+          setIsSelecting={setIsSelecting}
+        />
+        <Text style={{ textAlign: 'center', marginTop: 5 }}>Page {item}</Text>
+      </View>
     );
   };
 
@@ -46,12 +73,17 @@ const PdfViewer = () => {
     <View style={styles.container} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       <Text style={styles.header}>{fileName} ({pageCount} pages)</Text>
       <View style={{ flex: 1, width: '100%' }}>
-        <FlashList
-          data={Array.from({ length: pageCount }, (_, i) => i + 1)}
-          renderItem={renderItem}
-          estimatedItemSize={itemHeight + 40} // height + margin + text
-          keyExtractor={(item) => item.toString()}
-        />
+        <Zoom disabled={isSelecting}>
+          <View style={{ width: width, height: '100%' }}>
+            <FlashList
+              data={Array.from({ length: pageCount }, (_, i) => i + 1)}
+              renderItem={renderItem}
+              estimatedItemSize={600}
+              keyExtractor={(item) => item.toString()}
+              scrollEnabled={!isSelecting}
+            />
+          </View>
+        </Zoom>
       </View>
       <View style={{ padding: 20 }}>
          <Button title='Pick Another PDF' onPress={pickFile} />
@@ -62,11 +94,13 @@ const PdfViewer = () => {
 
 export default function App() {
   return (
-    <PdfDocumentProvider>
-      <View style={styles.mainContainer}>
-        <PdfViewer />
-      </View>
-    </PdfDocumentProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <PdfDocumentProvider>
+        <View style={styles.mainContainer}>
+          <PdfViewer />
+        </View>
+      </PdfDocumentProvider>
+    </GestureHandlerRootView>
   );
 }
 

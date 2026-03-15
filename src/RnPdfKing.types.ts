@@ -20,4 +20,6 @@ export type RnPdfKingViewProps = {
   height?: number;
   style?: StyleProp<ViewStyle>;
   onSelectionChanged?: (event: { nativeEvent: { selectedText: string } }) => void;
+  onSelectionStarted?: () => void;
+  onSelectionEnded?: () => void;
 };

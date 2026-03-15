@@ -296,6 +296,7 @@ class PdfPageView @JvmOverloads constructor(
     // Internal State
     private var scale: Float = 1f
     private var draggingHandle: HandleType? = null
+    private var isInteractingWithSelection: Boolean = false
     
     // Paints
     private val selectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -341,12 +342,18 @@ class PdfPageView @JvmOverloads constructor(
         
         val width = widthSize // Match parent/width constraint
         
+        val heightMode = MeasureSpec.getMode(heightMeasureSpec)
+        val heightSize = MeasureSpec.getSize(heightMeasureSpec)
+        
         val height: Int
-        if (bitmap != null && bitmap!!.width > 0) {
+        if (heightMode == MeasureSpec.EXACTLY) {
+            height = heightSize
+        } else if (bitmap != null && bitmap!!.width > 0) {
             val aspect = bitmap!!.width.toFloat() / bitmap!!.height.toFloat()
             height = (width / aspect).toInt()
         } else {
-             height = min(width, 300) // Default min size
+             // Fallback if no exact height and no bitmap: assume standard A4 ratio (1/1.414)
+             height = (width * 1.414).toInt() 
         }
         
         setMeasuredDimension(width, height)
@@ -533,6 +540,7 @@ class PdfPageView @JvmOverloads constructor(
             selectionStart = null
             selectionEnd = null
             onSelectionChanged?.invoke("", null, null, null, null)
+            onSelectionEnd?.invoke()
             invalidate()
         }
     }
@@ -549,6 +557,8 @@ class PdfPageView @JvmOverloads constructor(
             e++
         }
         updateSelection(s, e)
+        isInteractingWithSelection = true
+        onSelectionStart?.invoke()
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -582,6 +592,7 @@ class PdfPageView @JvmOverloads constructor(
                 
                 if (hitStart || hitEnd) {
                     draggingHandle = if (hitStart) HandleType.START else HandleType.END
+                    isInteractingWithSelection = true
                     onSelectionStart?.invoke()
                     parent.requestDisallowInterceptTouchEvent(true)
                     return true
@@ -617,8 +628,9 @@ class PdfPageView @JvmOverloads constructor(
                 return gestureDetector.onTouchEvent(event)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                if (draggingHandle != null) {
+                if (draggingHandle != null || isInteractingWithSelection) {
                     draggingHandle = null
+                    isInteractingWithSelection = false
                     onSelectionEnd?.invoke()
                     parent.requestDisallowInterceptTouchEvent(false)
                     return true

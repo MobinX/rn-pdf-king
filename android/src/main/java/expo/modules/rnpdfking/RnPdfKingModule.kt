@@ -90,7 +90,7 @@ class RnPdfKingModule : Module() {
         view.setHighlights(highlights)
       }
 
-      Events("onSelectionChanged")
+      Events("onSelectionChanged", "onSelectionStarted", "onSelectionEnded")
     }
   }
 

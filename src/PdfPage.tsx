@@ -9,10 +9,21 @@ export interface PdfPageProps extends ViewProps {
   width?: number;
   height?: number;
   onSelectionChanged?: (event: NativeSyntheticEvent<{ selectedText: string }>) => void;
+  onSelectionStarted?: (event: NativeSyntheticEvent<{}>) => void;
+  onSelectionEnded?: (event: NativeSyntheticEvent<{}>) => void;
 }
 
 export const PdfPage: React.FC<PdfPageProps> = (props) => {
-  const { width, height, ...rest } = props;
-  // @ts-ignore: Native props mismatch with ViewProps
-  return <NativePdfView pdfWidth={width} pdfHeight={height} {...rest} />;
+  const { width, height, onSelectionChanged, onSelectionStarted, onSelectionEnded, ...rest } = props;
+  
+  return (
+    <NativePdfView 
+      pdfWidth={width} 
+      pdfHeight={height} 
+      onSelectionChanged={onSelectionChanged}
+      onSelectionStarted={onSelectionStarted}
+      onSelectionEnded={onSelectionEnded}
+      {...rest} 
+    />
+  );
 };

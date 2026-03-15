@@ -24,6 +24,8 @@ import kotlinx.coroutines.cancel
 
 class RnPdfKingView(context: Context, appContext: AppContext) : ExpoView(context, appContext) {
     private val onSelectionChanged by EventDispatcher()
+    private val onSelectionStarted by EventDispatcher()
+    private val onSelectionEnded by EventDispatcher()
 
     private var pageNo = 0
     private var viewWidth = 0
@@ -49,6 +51,14 @@ class RnPdfKingView(context: Context, appContext: AppContext) : ExpoView(context
             if (text.isNotEmpty()) {
                 onSelectionChanged(mapOf("selectedText" to text))
             }
+        }
+        
+        pdfPageView.onSelectionStart = {
+            onSelectionStarted(mapOf())
+        }
+        
+        pdfPageView.onSelectionEnd = {
+            onSelectionEnded(mapOf())
         }
         
         addView(pdfPageView)
