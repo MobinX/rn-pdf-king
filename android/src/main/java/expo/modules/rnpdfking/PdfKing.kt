@@ -297,6 +297,8 @@ class PdfPageView @JvmOverloads constructor(
     private var scale: Float = 1f
     private var draggingHandle: HandleType? = null
     private var isInteractingWithSelection: Boolean = false
+    private var startRawX: Float = 0f
+    private var startRawY: Float = 0f
     
     // Paints
     private val selectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -559,12 +561,27 @@ class PdfPageView @JvmOverloads constructor(
         updateSelection(s, e)
         isInteractingWithSelection = true
         onSelectionStart?.invoke()
+        parent?.requestDisallowInterceptTouchEvent(true)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.pointerCount > 1) {
+            if (draggingHandle != null || isInteractingWithSelection) {
+                draggingHandle = null
+                isInteractingWithSelection = false
+                onSelectionEnd?.invoke()
+                parent?.requestDisallowInterceptTouchEvent(false)
+            }
+            return false
+        }
+
         // Handle Dragging
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                startRawX = event.rawX
+                startRawY = event.rawY
+                gestureDetector.setIsLongpressEnabled(true)
+
                 val x = event.x
                 val y = event.y
                 
@@ -594,14 +611,23 @@ class PdfPageView @JvmOverloads constructor(
                     draggingHandle = if (hitStart) HandleType.START else HandleType.END
                     isInteractingWithSelection = true
                     onSelectionStart?.invoke()
-                    parent.requestDisallowInterceptTouchEvent(true)
+                    parent?.requestDisallowInterceptTouchEvent(true)
                     return true
                 }
                 
                 return gestureDetector.onTouchEvent(event)
             }
             MotionEvent.ACTION_MOVE -> {
-                if (draggingHandle != null) {
+                val dxRaw = abs(event.rawX - startRawX)
+                val dyRaw = abs(event.rawY - startRawY)
+                
+                if (dxRaw > 20 || dyRaw > 20) {
+                    if (!isInteractingWithSelection && draggingHandle == null) {
+                        gestureDetector.setIsLongpressEnabled(false)
+                    }
+                }
+
+                if (draggingHandle != null || isInteractingWithSelection) {
                     val index = getCharIndexAt(event.x, event.y)
                     if (index != null) {
                         val s = selectionStart ?: index
@@ -610,14 +636,15 @@ class PdfPageView @JvmOverloads constructor(
                         if (draggingHandle == HandleType.START) {
                             if (index > e) {
                                 updateSelection(e, index)
-                                draggingHandle = HandleType.END // Swap if we dragged start past end
+                                draggingHandle = HandleType.END
                             } else {
                                 updateSelection(index, e)
                             }
                         } else {
+                            // Dragging END handle or initial drag after long press
                             if (index < s) {
                                 updateSelection(index, s)
-                                draggingHandle = HandleType.START // Swap if we dragged end past start
+                                draggingHandle = HandleType.START
                             } else {
                                 updateSelection(s, index)
                             }
@@ -632,7 +659,7 @@ class PdfPageView @JvmOverloads constructor(
                     draggingHandle = null
                     isInteractingWithSelection = false
                     onSelectionEnd?.invoke()
-                    parent.requestDisallowInterceptTouchEvent(false)
+                    parent?.requestDisallowInterceptTouchEvent(false)
                     return true
                 }
                 return gestureDetector.onTouchEvent(event)
