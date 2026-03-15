@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["RnPdfKingModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.rnpdfking.RnPdfKingModule"]
+  }
+}
