@@ -6,6 +6,8 @@ export type OnLoadEventPayload = {
 
 export type RnPdfKingModuleEvents = {
   onChange: (params: ChangeEventPayload) => void;
+  onPdfLoadSuccess: (event: { filePath: string; fileName: string; pageCount: number }) => void;
+  onPdfLoadError: (event: { message: string }) => void;
 };
 
 export type ChangeEventPayload = {
@@ -13,7 +15,9 @@ export type ChangeEventPayload = {
 };
 
 export type RnPdfKingViewProps = {
-  url: string;
-  onLoad: (event: { nativeEvent: OnLoadEventPayload }) => void;
+  pageNo: number;
+  width?: number;
+  height?: number;
   style?: StyleProp<ViewStyle>;
+  onSelectionChanged?: (event: { nativeEvent: { selectedText: string } }) => void;
 };

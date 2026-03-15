@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@shopify/flash-list": "2.0.2",
     "expo": "~55.0.6",
     "react": "19.2.0",
     "react-native": "0.83.2"
