@@ -10,6 +10,15 @@ class RnPdfKingModule extends NativeModule<RnPdfKingModuleEvents> {
   hello() {
     return 'Hello world! 👋';
   }
+  async pickFile(): Promise<void> {
+    console.warn('pickFile is not implemented on web');
+  }
+  async loadPdf(path: string): Promise<void> {
+    console.warn('loadPdf is not implemented on web');
+  }
+  async checkInitialIntent(): Promise<boolean> {
+    return false;
+  }
 }
 
 export default registerWebModule(RnPdfKingModule, 'RnPdfKingModule');
