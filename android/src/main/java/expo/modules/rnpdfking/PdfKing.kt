@@ -301,6 +301,8 @@ class PdfPageView @JvmOverloads constructor(
     private var isInteractingWithSelection: Boolean = false
     private var startRawX: Float = 0f
     private var startRawY: Float = 0f
+    private val longPressHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var longPressRunnable: Runnable? = null
     
     // Paints
     private val selectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -327,7 +329,7 @@ class PdfPageView @JvmOverloads constructor(
         }
         
         override fun onLongPress(e: MotionEvent) {
-            handleLongPress(e.x, e.y)
+            // Standard long press disabled, using custom logic in onTouchEvent
         }
         
         override fun onDown(e: MotionEvent): Boolean = true
@@ -436,7 +438,7 @@ class PdfPageView @JvmOverloads constructor(
         canvas.drawLine(pos.x, pos.y, pos.x, topY, handleLinePaint)
         canvas.drawCircle(pos.x, pos.y, 20f, handleCirclePaint)
     }
-
+ 
     private fun getHandlePosition(index: Int, isStart: Boolean): PointF {
         if (index !in textChars.indices) return PointF(0f, 0f)
         val r = textChars[index].rect
@@ -444,7 +446,7 @@ class PdfPageView @JvmOverloads constructor(
         val y = r.bottom
         return PointF(x * scale, y * scale)
     }
-
+ 
     private fun getCharIndexAt(x: Float, y: Float): Int? {
         if (textChars.isEmpty()) return null
         val pdfX = x / scale
@@ -459,12 +461,12 @@ class PdfPageView @JvmOverloads constructor(
             pdfY >= r.top - padding && pdfY <= r.bottom + padding
         }
         if (exactMatch != -1) return exactMatch
-
+ 
         // Proximity match
         var minDistance = Float.MAX_VALUE
         var closestIndex = -1
-        val maxDistSq = 50f * 50f 
-
+        val maxDistSq = 25f * 25f
+ 
         textChars.forEachIndexed { index, char ->
             val cx = char.rect.centerX()
             val cy = char.rect.centerY()
@@ -478,19 +480,19 @@ class PdfPageView @JvmOverloads constructor(
         }
         return if (minDistance < maxDistSq) closestIndex else null
     }
-
+ 
     private fun getHighlightAt(index: Int): String? {
         return preDefinedHighlights.firstOrNull { highlight ->
             index >= highlight.startIndex && index <= highlight.endIndex
         }?.id
     }
-
+ 
     private fun updateSelection(s: Int, e: Int) {
         val start = min(s, e)
         val end = max(s, e)
-
+ 
         if (selectionStart == start && selectionEnd == end) return
-
+ 
         selectionStart = start
         selectionEnd = end
         
@@ -503,7 +505,7 @@ class PdfPageView @JvmOverloads constructor(
         
         val startChar = textChars.getOrNull(start)
         val endChar = textChars.getOrNull(end)
-
+ 
         val startPdf = if (startChar != null) PointF(startChar.rect.left, startChar.rect.bottom) else null
         val endPdf = if (endChar != null) PointF(endChar.rect.right, endChar.rect.bottom) else null
         
@@ -526,7 +528,7 @@ class PdfPageView @JvmOverloads constructor(
         if (endScreen != null) {
             endScreen.offset(location[0].toFloat(), location[1].toFloat())
         }
-
+ 
         onSelectionChanged?.invoke(sb.toString(), startPdf, endPdf, startScreen, endScreen)
         invalidate()
     }
@@ -565,32 +567,36 @@ class PdfPageView @JvmOverloads constructor(
         onSelectionStart?.invoke()
         parent?.requestDisallowInterceptTouchEvent(true)
     }
-
+ 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (event.pointerCount > 1) {
+            cancelSelectionLongPress()
             if (draggingHandle != null || isInteractingWithSelection) {
                 draggingHandle = null
                 isInteractingWithSelection = false
+                selectionStart = null
+                selectionEnd = null
+                onSelectionChanged?.invoke("", null, null, null, null)
                 onSelectionEnd?.invoke()
+                invalidate()
                 parent?.requestDisallowInterceptTouchEvent(false)
             }
             return false
         }
-
+ 
         // Handle Dragging
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 startRawX = event.rawX
                 startRawY = event.rawY
-                gestureDetector.setIsLongpressEnabled(true)
-
+                
                 val x = event.x
                 val y = event.y
                 
                 // Check handles
                 val s = selectionStart
                 val e = selectionEnd
-                
+ 
                 var hitStart = false
                 var hitEnd = false
                 val touchRadius = 60f
@@ -617,18 +623,19 @@ class PdfPageView @JvmOverloads constructor(
                     return true
                 }
                 
+                // Start custom long press timer
+                scheduleSelectionLongPress(x, y)
+                
                 return gestureDetector.onTouchEvent(event)
             }
             MotionEvent.ACTION_MOVE -> {
                 val dxRaw = abs(event.rawX - startRawX)
                 val dyRaw = abs(event.rawY - startRawY)
                 
-                if (dxRaw > 20 || dyRaw > 20) {
-                    if (!isInteractingWithSelection && draggingHandle == null) {
-                        gestureDetector.setIsLongpressEnabled(false)
-                    }
+                if (dxRaw > 15 || dyRaw > 15) {
+                    cancelSelectionLongPress()
                 }
-
+ 
                 if (draggingHandle != null || isInteractingWithSelection) {
                     val index = getCharIndexAt(event.x, event.y)
                     if (index != null) {
@@ -657,6 +664,7 @@ class PdfPageView @JvmOverloads constructor(
                 return gestureDetector.onTouchEvent(event)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                cancelSelectionLongPress()
                 if (draggingHandle != null || isInteractingWithSelection) {
                     draggingHandle = null
                     isInteractingWithSelection = false
@@ -668,5 +676,20 @@ class PdfPageView @JvmOverloads constructor(
             }
         }
         return super.onTouchEvent(event)
+    }
+
+    private fun scheduleSelectionLongPress(x: Float, y: Float) {
+        cancelSelectionLongPress()
+        longPressRunnable = Runnable {
+            handleLongPress(x, y)
+        }
+        longPressHandler.postDelayed(longPressRunnable!!, 800)
+    }
+
+    private fun cancelSelectionLongPress() {
+        longPressRunnable?.let {
+            longPressHandler.removeCallbacks(it)
+            longPressRunnable = null
+        }
     }
 }
