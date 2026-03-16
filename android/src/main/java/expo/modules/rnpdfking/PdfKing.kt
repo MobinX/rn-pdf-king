@@ -299,6 +299,7 @@ class PdfPageView @JvmOverloads constructor(
     private var scale: Float = 1f
     private var draggingHandle: HandleType? = null
     private var isInteractingWithSelection: Boolean = false
+    private var isPanning: Boolean = false
     private var startRawX: Float = 0f
     private var startRawY: Float = 0f
     private val longPressHandler = android.os.Handler(android.os.Looper.getMainLooper())
@@ -321,6 +322,7 @@ class PdfPageView @JvmOverloads constructor(
     private val bitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     private enum class HandleType { START, END }
+    private val touchSlop = android.view.ViewConfiguration.get(context).scaledTouchSlop
 
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onSingleTapUp(e: MotionEvent): Boolean {
@@ -329,7 +331,9 @@ class PdfPageView @JvmOverloads constructor(
         }
         
         override fun onLongPress(e: MotionEvent) {
-            // Standard long press disabled, using custom logic in onTouchEvent
+            if (!isPanning) {
+                handleLongPress(e.x, e.y)
+            }
         }
         
         override fun onDown(e: MotionEvent): Boolean = true
@@ -552,6 +556,7 @@ class PdfPageView @JvmOverloads constructor(
     }
     
     private fun handleLongPress(x: Float, y: Float) {
+        if (isPanning) return
         val index = getCharIndexAt(x, y) ?: return
         
         var s = index
@@ -569,74 +574,65 @@ class PdfPageView @JvmOverloads constructor(
     }
  
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        // Multi-touch handling (pinch zoom)
         if (event.pointerCount > 1) {
-            cancelSelectionLongPress()
             if (draggingHandle != null || isInteractingWithSelection) {
-                draggingHandle = null
-                isInteractingWithSelection = false
-                selectionStart = null
-                selectionEnd = null
-                onSelectionChanged?.invoke("", null, null, null, null)
-                onSelectionEnd?.invoke()
-                invalidate()
-                parent?.requestDisallowInterceptTouchEvent(false)
+                clearSelectionState()
             }
-            return false
+            return false // Let parent handle pinch
         }
- 
-        // Handle Dragging
+
+        val gestureHandled = gestureDetector.onTouchEvent(event)
+
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 startRawX = event.rawX
                 startRawY = event.rawY
+                isPanning = false
                 
                 val x = event.x
                 val y = event.y
                 
-                // Check handles
+                // Check if we hit a selection handle
                 val s = selectionStart
                 val e = selectionEnd
- 
-                var hitStart = false
-                var hitEnd = false
                 val touchRadius = 60f
                 
                 if (s != null && s in textChars.indices) {
                     val pos = getHandlePosition(s, true)
-                    val dx = x - pos.x
-                    val dy = y - pos.y
-                    if (sqrt(dx*dx + dy*dy) < touchRadius) hitStart = true
+                    if (sqrt((x - pos.x).pow(2) + (y - pos.y).pow(2)) < touchRadius) {
+                        draggingHandle = HandleType.START
+                        isInteractingWithSelection = true
+                        onSelectionStart?.invoke()
+                        parent?.requestDisallowInterceptTouchEvent(true)
+                        return true
+                    }
                 }
                 
                 if (e != null && e in textChars.indices) {
                     val pos = getHandlePosition(e, false)
-                    val dx = x - pos.x
-                    val dy = y - pos.y
-                    if (sqrt(dx*dx + dy*dy) < touchRadius) hitEnd = true
+                    if (sqrt((x - pos.x).pow(2) + (y - pos.y).pow(2)) < touchRadius) {
+                        draggingHandle = HandleType.END
+                        isInteractingWithSelection = true
+                        onSelectionStart?.invoke()
+                        parent?.requestDisallowInterceptTouchEvent(true)
+                        return true
+                    }
                 }
                 
-                if (hitStart || hitEnd) {
-                    draggingHandle = if (hitStart) HandleType.START else HandleType.END
-                    isInteractingWithSelection = true
-                    onSelectionStart?.invoke()
-                    parent?.requestDisallowInterceptTouchEvent(true)
-                    return true
-                }
-                
-                // Start custom long press timer
-                scheduleSelectionLongPress(x, y)
-                
-                return gestureDetector.onTouchEvent(event)
+                return true // Always return true on DOWN to receive MOVE/UP and long press
             }
             MotionEvent.ACTION_MOVE -> {
                 val dxRaw = abs(event.rawX - startRawX)
                 val dyRaw = abs(event.rawY - startRawY)
                 
-                if (dxRaw > 15 || dyRaw > 15) {
-                    cancelSelectionLongPress()
+                if (dxRaw > touchSlop || dyRaw > touchSlop) {
+                    if (!isInteractingWithSelection) {
+                        isPanning = true
+                    }
                 }
- 
-                if (draggingHandle != null || isInteractingWithSelection) {
+
+                if (isInteractingWithSelection) {
                     val index = getCharIndexAt(event.x, event.y)
                     if (index != null) {
                         val s = selectionStart ?: index
@@ -650,7 +646,6 @@ class PdfPageView @JvmOverloads constructor(
                                 updateSelection(index, e)
                             }
                         } else {
-                            // Dragging END handle or initial drag after long press
                             if (index < s) {
                                 updateSelection(index, s)
                                 draggingHandle = HandleType.START
@@ -661,35 +656,35 @@ class PdfPageView @JvmOverloads constructor(
                     }
                     return true
                 }
-                return gestureDetector.onTouchEvent(event)
+                
+                // If we are panning and not selecting, return false to encourage parent interception (scrolling)
+                return !isPanning
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                cancelSelectionLongPress()
-                if (draggingHandle != null || isInteractingWithSelection) {
-                    draggingHandle = null
+                if (isInteractingWithSelection) {
                     isInteractingWithSelection = false
+                    draggingHandle = null
                     onSelectionEnd?.invoke()
                     parent?.requestDisallowInterceptTouchEvent(false)
                     return true
                 }
-                return gestureDetector.onTouchEvent(event)
+                isPanning = false
+                return gestureHandled
             }
         }
-        return super.onTouchEvent(event)
+        return gestureHandled
     }
 
-    private fun scheduleSelectionLongPress(x: Float, y: Float) {
-        cancelSelectionLongPress()
-        longPressRunnable = Runnable {
-            handleLongPress(x, y)
-        }
-        longPressHandler.postDelayed(longPressRunnable!!, 800)
+    private fun clearSelectionState() {
+        draggingHandle = null
+        isInteractingWithSelection = false
+        selectionStart = null
+        selectionEnd = null
+        onSelectionChanged?.invoke("", null, null, null, null)
+        onSelectionEnd?.invoke()
+        invalidate()
+        parent?.requestDisallowInterceptTouchEvent(false)
     }
 
-    private fun cancelSelectionLongPress() {
-        longPressRunnable?.let {
-            longPressHandler.removeCallbacks(it)
-            longPressRunnable = null
-        }
-    }
+    private fun Float.pow(n: Int): Float = Math.pow(this.toDouble(), n.toDouble()).toFloat()
 }
