@@ -288,6 +288,7 @@ class PdfPageView @JvmOverloads constructor(
     // Config
     var handleColor: Int = Color.BLUE
     var selectionColor: Int = Color.argb(77, 0, 0, 255) // 0.3 alpha blue (approx 77/255)
+    var selectionEnabled: Boolean = true
     
     // Callbacks
     var onSelectionChanged: ((String, PointF?, PointF?, PointF?, PointF?) -> Unit)? = null
@@ -331,7 +332,7 @@ class PdfPageView @JvmOverloads constructor(
         }
         
         override fun onLongPress(e: MotionEvent) {
-            if (!isPanning) {
+            if (!isPanning && selectionEnabled) {
                 handleLongPress(e.x, e.y)
             }
         }
@@ -594,29 +595,31 @@ class PdfPageView @JvmOverloads constructor(
                 val y = event.y
                 
                 // Check if we hit a selection handle
-                val s = selectionStart
-                val e = selectionEnd
-                val touchRadius = 60f
+                if (selectionEnabled) {
+                    val s = selectionStart
+                    val e = selectionEnd
+                    val touchRadius = 60f
                 
-                if (s != null && s in textChars.indices) {
-                    val pos = getHandlePosition(s, true)
-                    if (sqrt((x - pos.x).pow(2) + (y - pos.y).pow(2)) < touchRadius) {
-                        draggingHandle = HandleType.START
-                        isInteractingWithSelection = true
-                        onSelectionStart?.invoke()
-                        parent?.requestDisallowInterceptTouchEvent(true)
-                        return true
+                    if (s != null && s in textChars.indices) {
+                        val pos = getHandlePosition(s, true)
+                        if (sqrt((x - pos.x).pow(2) + (y - pos.y).pow(2)) < touchRadius) {
+                            draggingHandle = HandleType.START
+                            isInteractingWithSelection = true
+                            onSelectionStart?.invoke()
+                            parent?.requestDisallowInterceptTouchEvent(true)
+                            return true
+                        }
                     }
-                }
                 
-                if (e != null && e in textChars.indices) {
-                    val pos = getHandlePosition(e, false)
-                    if (sqrt((x - pos.x).pow(2) + (y - pos.y).pow(2)) < touchRadius) {
-                        draggingHandle = HandleType.END
-                        isInteractingWithSelection = true
-                        onSelectionStart?.invoke()
-                        parent?.requestDisallowInterceptTouchEvent(true)
-                        return true
+                    if (e != null && e in textChars.indices) {
+                        val pos = getHandlePosition(e, false)
+                        if (sqrt((x - pos.x).pow(2) + (y - pos.y).pow(2)) < touchRadius) {
+                            draggingHandle = HandleType.END
+                            isInteractingWithSelection = true
+                            onSelectionStart?.invoke()
+                            parent?.requestDisallowInterceptTouchEvent(true)
+                            return true
+                        }
                     }
                 }
                 
@@ -632,7 +635,7 @@ class PdfPageView @JvmOverloads constructor(
                     }
                 }
 
-                if (isInteractingWithSelection) {
+                if (isInteractingWithSelection && selectionEnabled) {
                     val index = getCharIndexAt(event.x, event.y)
                     if (index != null) {
                         val s = selectionStart ?: index

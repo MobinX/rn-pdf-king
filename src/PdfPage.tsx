@@ -12,6 +12,7 @@ export interface PdfPageProps extends ViewProps {
   preDefinedHighlights?: Highlight[];
   handleColor?: string | number;
   selectionColor?: string | number;
+  selectionEnabled?: boolean;
   onSelectionChanged?: (event: NativeSyntheticEvent<{ selectedText: string }>) => void;
   onSelectionStarted?: (event: NativeSyntheticEvent<{}>) => void;
   onSelectionEnded?: (event: NativeSyntheticEvent<{}>) => void;
@@ -25,6 +26,7 @@ export const PdfPage: React.FC<PdfPageProps> = (props) => {
     preDefinedHighlights,
     handleColor,
     selectionColor,
+    selectionEnabled,
     onSelectionChanged, 
     onSelectionStarted, 
     onSelectionEnded,
@@ -44,6 +46,7 @@ export const PdfPage: React.FC<PdfPageProps> = (props) => {
       preDefinedHighlights={processedHighlights}
       handleColor={processColor(handleColor)}
       selectionColor={processColor(selectionColor)}
+      selectionEnabled={selectionEnabled}
       onSelectionChanged={onSelectionChanged}
       onSelectionStarted={onSelectionStarted}
       onSelectionEnded={onSelectionEnded}

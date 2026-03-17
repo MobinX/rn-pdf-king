@@ -76,6 +76,10 @@ class RnPdfKingView(context: Context, appContext: AppContext) : ExpoView(context
     fun setSelectionColor(color: Int) {
         pdfPageView.selectionColor = color
     }
+
+    fun setSelectionEnabled(enabled: Boolean) {
+        pdfPageView.selectionEnabled = enabled
+    }
     
     private fun render() {
         if (viewMode == "manager") {

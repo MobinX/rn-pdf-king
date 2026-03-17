@@ -8,7 +8,10 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import { GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
+import {
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
 import { FlashList } from "@shopify/flash-list";
 import Animated, { useAnimatedRef } from "react-native-reanimated";
 import RnPdfKing, {
@@ -25,11 +28,13 @@ const ZoomablePage = ({
   width,
   itemHeight,
   setIsSelecting,
+  selectionEnabled,
 }: {
   pageNo: number;
   width: number;
   itemHeight: number;
   setIsSelecting: (v: boolean) => void;
+  selectionEnabled: boolean;
 }) => {
   const highlights = [
     { id: "h1", startIndex: 0, endIndex: 100, color: "rgba(255, 235, 0, 0.5)" },
@@ -50,6 +55,7 @@ const ZoomablePage = ({
       }
       onSelectionStarted={() => setIsSelecting(true)}
       onSelectionEnded={() => setIsSelecting(false)}
+      selectionEnabled={selectionEnabled}
       onPreDefinedHighlightClick={(e) =>
         alert(`Highlight clicked: ${e.nativeEvent.id}`)
       }
@@ -62,6 +68,7 @@ const PdfViewer = () => {
     usePdfDocument();
   const [width, setWidth] = useState(Dimensions.get("window").width);
   const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionEnabled, setSelectionEnabled] = useState(true);
   const itemHeight = width * 1.414;
   const listRef = useAnimatedRef<FlashList<number>>();
   const [isZoomed, setIsZoomed] = useState(false);
@@ -75,6 +82,18 @@ const PdfViewer = () => {
   } = useZoomGesture({
     disableVerticalPan: true,
     parentAnimatedScrollRef: listRef,
+    onPanningEnd: () => {
+      setSelectionEnabled(true);
+    },
+    onPanningStarted: () => {
+      setSelectionEnabled(false);
+    },
+    onPinchingStarted: () => {
+      setSelectionEnabled(false);
+    },
+    onPinchingStopped: () => {
+      setSelectionEnabled(true);
+    },
     onZoomChange: (s) => {
       const newIsZoomed = s > 1;
       if (newIsZoomed !== isZoomed) {
@@ -105,6 +124,7 @@ const PdfViewer = () => {
           width={width}
           itemHeight={itemHeight}
           setIsSelecting={setIsSelecting}
+          selectionEnabled={selectionEnabled}
         />
         <Text style={{ textAlign: "center", marginTop: 5 }}>Page {item}</Text>
       </View>

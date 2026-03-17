@@ -147,6 +147,18 @@ export interface UseZoomGestureProps {
    */
   onPanningEnd?: () => void
   /**
+   * Callback fired when panning started.
+   */
+  onPanningStarted?: () => void
+  /**
+   * Callback fired when pinching started.
+   */
+  onPinchingStarted?: () => void
+  /**
+   * Callback fired when pinching stopped.
+   */
+  onPinchingStopped?: () => void
+  /**
    * Disable vertical translation while panning.
    */
   disableVerticalPan?: boolean
@@ -204,6 +216,9 @@ export function useZoomGesture(props: UseZoomGestureProps = {}): UseZoomGestureR
     onPanningUpdate,
     onPanningStart,
     onPanningEnd,
+    onPanningStarted,
+    onPinchingStarted,
+    onPinchingStopped,
     disableVerticalPan = false,
     parentAnimatedScrollRef,
   } = props
@@ -686,6 +701,8 @@ export function useZoomGesture(props: UseZoomGestureProps = {}): UseZoomGestureR
 
     if (onPanningStart)
       runOnJS(onPanningStart)()
+    if (onPanningStarted)
+      runOnJS(onPanningStarted)()
     })
     .onUpdate((event: GestureUpdateEvent<PanGestureHandlerEventPayload>) => {
       'worklet'
@@ -886,6 +903,9 @@ export function useZoomGesture(props: UseZoomGestureProps = {}): UseZoomGestureR
     // Save initial focal point
     pinchFocalX.value = event.focalX
     pinchFocalY.value = event.focalY
+
+    if (onPinchingStarted)
+      runOnJS(onPinchingStarted)()
     })
     .onUpdate((event: GestureUpdateEvent<PinchGestureHandlerEventPayload>) => {
       'worklet'
@@ -951,6 +971,9 @@ export function useZoomGesture(props: UseZoomGestureProps = {}): UseZoomGestureR
     const isNowZoomed = finalScale > minScale
     if (wasZoomed !== isNowZoomed)
       isZoomedIn.value = isNowZoomed
+
+    if (onPinchingStopped)
+      runOnJS(onPinchingStopped)()
     })
 
     return Gesture.Simultaneous(tapGesture, panGesture, pinchGesture)
@@ -1081,6 +1104,18 @@ export interface ZoomProps {
    * Callback fired when panning ends.
    */
   onPanningEnd?: () => void
+  /**
+   * Callback fired when panning started.
+   */
+  onPanningStarted?: () => void
+  /**
+   * Callback fired when pinching started.
+   */
+  onPinchingStarted?: () => void
+  /**
+   * Callback fired when pinching stopped.
+   */
+  onPinchingStopped?: () => void
   /**
    * Enable seamless gallery swipe navigation to parent (e.g., FlatList) when at edge.
    * Apple Photos behavior: when zoomed and panning hits horizontal boundary,

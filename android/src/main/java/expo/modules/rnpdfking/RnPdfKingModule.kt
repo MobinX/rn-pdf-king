@@ -153,6 +153,10 @@ class RnPdfKingModule : Module() {
         view.setSelectionColor(color)
       }
 
+      Prop("selectionEnabled") { view: RnPdfKingView, enabled: Boolean ->
+        view.setSelectionEnabled(enabled)
+      }
+
       Events("onSelectionChanged", "onSelectionStarted", "onSelectionEnded", "onPreDefinedHighlightClick")
     }
   }
