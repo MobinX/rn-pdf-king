@@ -54,7 +54,12 @@ const PdfViewer = () => {
             handleColor="green"
             selectionColor="rgba(0, 255, 0, 0.3)"
             onSelectionChanged={(e) =>
-                console.log("Selection:", e.nativeEvent.selectedText)
+                console.log(
+                    "Selection:", 
+                    e.nativeEvent.selectedText,
+                    "Start:", e.nativeEvent.selectionStart,
+                    "End:", e.nativeEvent.selectionEnd
+                )
             }
             onSelectionStarted={() => setIsSelecting(true)}
             onSelectionEnded={() => setIsSelecting(false)}

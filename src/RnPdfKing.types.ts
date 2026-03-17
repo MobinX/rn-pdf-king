@@ -22,7 +22,7 @@ export type RnPdfKingViewProps = {
   selectionColor?: ColorValue | number;
   selectionEnabled?: boolean;
   style?: StyleProp<ViewStyle>;
-  onSelectionChanged?: (event: NativeSyntheticEvent<{ selectedText: string }>) => void;
+  onSelectionChanged?: (event: NativeSyntheticEvent<{ selectedText: string; selectionStart: number; selectionEnd: number }>) => void;
   onSelectionStarted?: (event: NativeSyntheticEvent<{}>) => void;
   onSelectionEnded?: (event: NativeSyntheticEvent<{}>) => void;
   onPreDefinedHighlightClick?: (event: NativeSyntheticEvent<{ id: string }>) => void;

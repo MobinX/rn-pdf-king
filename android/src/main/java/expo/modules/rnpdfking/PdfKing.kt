@@ -291,7 +291,7 @@ class PdfPageView @JvmOverloads constructor(
     var selectionEnabled: Boolean = true
     
     // Callbacks
-    var onSelectionChanged: ((String, PointF?, PointF?, PointF?, PointF?) -> Unit)? = null
+    var onSelectionChanged: ((String, Int?, Int?, PointF?, PointF?, PointF?, PointF?) -> Unit)? = null
     var onHighlightClick: ((String) -> Unit)? = null
     var onSelectionStart: (() -> Unit)? = null
     var onSelectionEnd: (() -> Unit)? = null
@@ -534,7 +534,7 @@ class PdfPageView @JvmOverloads constructor(
             endScreen.offset(location[0].toFloat(), location[1].toFloat())
         }
  
-        onSelectionChanged?.invoke(sb.toString(), startPdf, endPdf, startScreen, endScreen)
+        onSelectionChanged?.invoke(sb.toString(), start, end, startPdf, endPdf, startScreen, endScreen)
         invalidate()
     }
     
@@ -550,7 +550,7 @@ class PdfPageView @JvmOverloads constructor(
         if (selectionStart != null || selectionEnd != null) {
             selectionStart = null
             selectionEnd = null
-            onSelectionChanged?.invoke("", null, null, null, null)
+            onSelectionChanged?.invoke("", null, null, null, null, null, null)
             onSelectionEnd?.invoke()
             invalidate()
         }
@@ -683,7 +683,7 @@ class PdfPageView @JvmOverloads constructor(
         isInteractingWithSelection = false
         selectionStart = null
         selectionEnd = null
-        onSelectionChanged?.invoke("", null, null, null, null)
+        onSelectionChanged?.invoke("", null, null, null, null, null, null)
         onSelectionEnd?.invoke()
         invalidate()
         parent?.requestDisallowInterceptTouchEvent(false)

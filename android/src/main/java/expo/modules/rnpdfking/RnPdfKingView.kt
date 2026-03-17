@@ -48,9 +48,19 @@ class RnPdfKingView(context: Context, appContext: AppContext) : ExpoView(context
         )
         pdfPageView.layoutParams = layoutParams
         
-        pdfPageView.onSelectionChanged = { text, p1, p2, p3, p4 ->
+        pdfPageView.onSelectionChanged = { text, start, end, p1, p2, p3, p4 ->
             if (text.isNotEmpty()) {
-                onSelectionChanged(mapOf("selectedText" to text))
+                onSelectionChanged(mapOf(
+                    "selectedText" to text,
+                    "selectionStart" to (start ?: -1),
+                    "selectionEnd" to (end ?: -1)
+                ))
+            } else {
+                 onSelectionChanged(mapOf(
+                    "selectedText" to "",
+                    "selectionStart" to -1,
+                    "selectionEnd" to -1
+                ))
             }
         }
         
