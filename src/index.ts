@@ -4,3 +4,6 @@ export { default } from './RnPdfKingModule';
 export * from  './RnPdfKing.types';
 export * from './PdfDocument';
 export * from './PdfPage';
+export * from './ZoomableList';
+export * from './ZoomablePage';
+export * from './ZoomablePdfPage';
