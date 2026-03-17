@@ -20,7 +20,6 @@ import RnPdfKing, {
 const PdfViewer = () => {
   const { loading, pageCount, filePath, fileName, pickFile, error } =
     usePdfDocument();
-  const [selectionEnabled, setSelectionEnabled] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
 
   useEffect(() => {
@@ -59,7 +58,6 @@ const PdfViewer = () => {
             }
             onSelectionStarted={() => setIsSelecting(true)}
             onSelectionEnded={() => setIsSelecting(false)}
-            selectionEnabled={selectionEnabled}
             onPreDefinedHighlightClick={(e) =>
                 alert(`Highlight clicked: ${e.nativeEvent.id}`)
             }
@@ -99,12 +97,6 @@ const PdfViewer = () => {
             renderItem={renderItem}
             estimatedItemSize={500}
             keyExtractor={(item) => item.toString()}
-            zoomProps={{
-                onPanningEnd: () => setSelectionEnabled(true),
-                onPanningStarted: () => setSelectionEnabled(false),
-                onPinchingStarted: () => setSelectionEnabled(false),
-                onPinchingStopped: () => setSelectionEnabled(true),
-            }}
             scrollEnabled={!isSelecting}
         />
       </View>

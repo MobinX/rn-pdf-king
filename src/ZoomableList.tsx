@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, createContext, useContext, useEffect } from 'react';
 import {
   StyleProp,
   ViewStyle,
@@ -15,6 +15,24 @@ import { useZoomGesture, UseZoomGestureProps } from './zoom/index';
 import { FlashList, FlashListProps, ListRenderItemInfo } from '@shopify/flash-list';
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+
+// Context for ZoomableList state
+interface ZoomableListContextType {
+  isZoomed: boolean;
+  isPanning: boolean;
+  isPinching: boolean;
+  width: number;
+}
+
+const ZoomableListContext = createContext<ZoomableListContextType | undefined>(undefined);
+
+export const useZoomableList = () => {
+  const context = useContext(ZoomableListContext);
+  if (!context) {
+    throw new Error('useZoomableList must be used within a ZoomableList');
+  }
+  return context;
+};
 
 export interface ZoomableListProps<T> extends Omit<FlashListProps<T>, 'renderItem'> {
   renderItem: (info: ListRenderItemInfo<T> & { width: number }) => React.ReactElement | null;
@@ -36,6 +54,9 @@ export function ZoomableList<T>(props: ZoomableListProps<T>) {
 
   const [width, setWidth] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const [isPinching, setIsPinching] = useState(false);
+
   // @ts-ignore
   const listRef = useAnimatedRef<FlashList<T>>();
 
@@ -48,6 +69,23 @@ export function ZoomableList<T>(props: ZoomableListProps<T>) {
   } = useZoomGesture({
     disableVerticalPan: true,
     parentAnimatedScrollRef: listRef,
+    ...zoomProps,
+    onPanningStarted: () => {
+      setIsPanning(true);
+      zoomProps?.onPanningStarted?.();
+    },
+    onPanningEnd: () => {
+      setIsPanning(false);
+      zoomProps?.onPanningEnd?.();
+    },
+    onPinchingStarted: () => {
+      setIsPinching(true);
+      zoomProps?.onPinchingStarted?.();
+    },
+    onPinchingStopped: () => {
+      setIsPinching(false);
+      zoomProps?.onPinchingStopped?.();
+    },
     onZoomChange: (s) => {
       const newIsZoomed = s > 1.05; // Small buffer
       if (newIsZoomed !== isZoomed) {
@@ -56,7 +94,6 @@ export function ZoomableList<T>(props: ZoomableListProps<T>) {
       }
       onZoomChange?.(s);
     },
-    ...zoomProps,
   });
 
   const handleLayout = (e: LayoutChangeEvent) => {
@@ -66,25 +103,27 @@ export function ZoomableList<T>(props: ZoomableListProps<T>) {
   };
 
   return (
-    <View style={[styles.container, style]} onLayout={handleLayout}>
-        <GestureDetector gesture={zoomGesture}>
-          <View style={{ flex: 1 }} onLayout={onLayout} collapsable={false}>
-            <Animated.View
-              style={[contentContainerAnimatedStyle, { flex: 1 }]}
-              onLayout={onLayoutContent}
-            >
-              <AnimatedFlashList
-                ref={listRef}
-                scrollEnabled={!isZoomed}
-                onScroll={onScroll}
-                scrollEventThrottle={16}
-                renderItem={(info) => renderItem({ ...info, width })}
-                {...flashListProps}
-              />
-            </Animated.View>
-          </View>
-        </GestureDetector>
-    </View>
+    <ZoomableListContext.Provider value={{ isZoomed, isPanning, isPinching, width }}>
+      <View style={[styles.container, style]} onLayout={handleLayout}>
+          <GestureDetector gesture={zoomGesture}>
+            <View style={{ flex: 1 }} onLayout={onLayout} collapsable={false}>
+              <Animated.View
+                style={[contentContainerAnimatedStyle, { flex: 1 }]}
+                onLayout={onLayoutContent}
+              >
+                <AnimatedFlashList
+                  ref={listRef}
+                  scrollEnabled={!isZoomed && !isPanning && !isPinching}
+                  onScroll={onScroll}
+                  scrollEventThrottle={16}
+                  renderItem={(info) => renderItem({ ...info, width })}
+                  {...flashListProps}
+                />
+              </Animated.View>
+            </View>
+          </GestureDetector>
+      </View>
+    </ZoomableListContext.Provider>
   );
 }
 
