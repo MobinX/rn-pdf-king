@@ -10,6 +10,25 @@ import {
 import {
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
+
+const GripHorizontal = ({ size = 20, color = "#666" }) => {
+  const dotSize = size / 6;
+  return (
+    <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+        <View style={{ width: dotSize, height: dotSize, borderRadius: dotSize / 2, backgroundColor: color, marginHorizontal: 1 }} />
+        <View style={{ width: dotSize, height: dotSize, borderRadius: dotSize / 2, backgroundColor: color, marginHorizontal: 1 }} />
+        <View style={{ width: dotSize, height: dotSize, borderRadius: dotSize / 2, backgroundColor: color, marginHorizontal: 1 }} />
+      </View>
+      <View style={{ flexDirection: 'row' }}>
+        <View style={{ width: dotSize, height: dotSize, borderRadius: dotSize / 2, backgroundColor: color, marginHorizontal: 1 }} />
+        <View style={{ width: dotSize, height: dotSize, borderRadius: dotSize / 2, backgroundColor: color, marginHorizontal: 1 }} />
+        <View style={{ width: dotSize, height: dotSize, borderRadius: dotSize / 2, backgroundColor: color, marginHorizontal: 1 }} />
+      </View>
+    </View>
+  );
+};
+
 import RnPdfKing, {
   PdfDocumentProvider,
   usePdfDocument,
@@ -103,6 +122,9 @@ const PdfViewer = () => {
             estimatedItemSize={500}
             keyExtractor={(item) => item.toString()}
             scrollEnabled={!isSelecting}
+            pageSliderEnabled
+            pageSliderLabel={(current, total) => `${current}/${total}`}
+            pageSliderLogo={<GripHorizontal size={20} color="#666" />}
         />
       </View>
       <View style={{ padding: 20 }}>
