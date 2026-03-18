@@ -31,7 +31,7 @@ import {
   ListRenderItemInfo,
 } from "@shopify/flash-list";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
 const PAGE_SLIDER_PADDING_Y = 16;
 const PAGE_SLIDER_THUMB_SIZE = 28;
@@ -81,6 +81,7 @@ export interface ZoomableListProps<T> extends Omit<
    * Logo/Icon for the slider thumb.
    */
   pageSliderLogo?: React.ReactNode;
+  onScrollPageNumberChanged?: (page: number) => void;
 }
 
 export function ZoomableList<T>(props: ZoomableListProps<T>) {
@@ -93,6 +94,7 @@ export function ZoomableList<T>(props: ZoomableListProps<T>) {
     pageSliderEnabled = false,
     pageSliderLabel,
     pageSliderLogo,
+    onScrollPageNumberChanged,
     ...flashListProps
   } = props;
 
@@ -105,6 +107,11 @@ export function ZoomableList<T>(props: ZoomableListProps<T>) {
   const [scrubIndex, setScrubIndex] = useState(0);
   const [trackHeight, setTrackHeight] = useState(0);
   const [hasScrolled, setHasScrolled] = useState(false);
+
+  // Notify parent of page changes
+  React.useEffect(() => {
+    onScrollPageNumberChanged?.(currentIndex + 1);
+  }, [currentIndex, onScrollPageNumberChanged]);
 
   // @ts-ignore
   const listRef = useAnimatedRef<FlashList<T>>();
@@ -135,7 +142,7 @@ export function ZoomableList<T>(props: ZoomableListProps<T>) {
       setIsPinching(false);
       zoomProps?.onPinchingStopped?.();
     },
-    onZoomChange: (s) => {
+    onZoomChange: (s: number) => {
       const newIsZoomed = s > 1.05; // Small buffer
       if (newIsZoomed !== isZoomed) {
         setIsZoomed(newIsZoomed);
@@ -324,7 +331,7 @@ export function ZoomableList<T>(props: ZoomableListProps<T>) {
                 ref={listRef}
                 scrollEnabled={!isZoomed && !isPanning && !isPinching}
                 scrollEventThrottle={16}
-                renderItem={(info) => renderItem({ ...info, width })}
+                renderItem={(info: ListRenderItemInfo<T>) => renderItem({ ...info, width })}
                 {...flashListProps}
                 onScroll={handleScroll}
                 onViewableItemsChanged={

@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Platform } from 'react-native';
 import RnPdfKingModule from './RnPdfKingModule';
 import { requireNativeViewManager } from 'expo-modules-core';
 

@@ -237,6 +237,31 @@ class PdfKing(private val context: Context) {
         }
     }
 
+    suspend fun getPageBitmapBase64(pageNo: Int): String {
+        val bitmap = getPageBitmap(pageNo)
+        val outputStream = java.io.ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+        val byteArray = outputStream.toByteArray()
+        return android.util.Base64.encodeToString(byteArray, android.util.Base64.NO_WRAP)
+    }
+
+    suspend fun getPageText(pageNo: Int): String {
+        return withContext(Dispatchers.IO) {
+            pdfMutex.withLock {
+                val document = requireNotNull(textDocument) { "No PDF loaded. Please choose a PDF file first." }
+                require(pageNo in 1..document.numberOfPages) {
+                    "Page number must be between 1 and ${document.numberOfPages}."
+                }
+
+                val stripper = PDFTextStripper().apply {
+                    startPage = pageNo
+                    endPage = pageNo
+                }
+                stripper.getText(document)
+            }
+        }
+    }
+
     fun closePdf() {
         try {
              pdfRenderer?.close()

@@ -7,6 +7,7 @@ import android.provider.OpenableColumns
 import com.mobinx.pdfking.PdfKingManager
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import expo.modules.kotlin.Promise
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -121,6 +122,28 @@ class RnPdfKingModule : Module() {
              }
         } else {
              this@RnPdfKingModule.sendEvent("onPdfLoadError", mapOf("message" to "File does not exist"))
+        }
+    }
+
+    AsyncFunction("getPageBitmapBase64") { pageNo: Int, promise: Promise ->
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val result = PdfKingManager.getInstance().getPageBitmapBase64(pageNo)
+                promise.resolve(result)
+            } catch (e: Exception) {
+                promise.reject("ERR_BITMAP", e.message, e)
+            }
+        }
+    }
+
+    AsyncFunction("getTextChars") { pageNo: Int, promise: Promise ->
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val result = PdfKingManager.getInstance().getPageText(pageNo)
+                promise.resolve(result)
+            } catch (e: Exception) {
+                promise.reject("ERR_TEXT", e.message, e)
+            }
         }
     }
 

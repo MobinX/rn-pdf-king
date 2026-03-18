@@ -49,7 +49,12 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "scheme": "rn-pdf-king-example",
+    "plugins": [
+      "expo-router"
+    ]
   }
 }

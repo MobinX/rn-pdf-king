@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, StyleProp, ViewStyle } from 'react-native';
 
 export interface ZoomablePageProps {
   children: React.ReactNode;
@@ -29,9 +29,3 @@ export const ZoomablePage: React.FC<ZoomablePageProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    overflow: 'hidden',
-  },
-});

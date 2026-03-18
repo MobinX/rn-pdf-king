@@ -8,7 +8,7 @@ export default function RnPdfKingView(props: RnPdfKingViewProps) {
       <iframe
         style={{ flex: 1 }}
         src={props.url}
-        onLoad={() => props.onLoad({ nativeEvent: { url: props.url } })}
+        onLoad={() => props.onLoad?.({ nativeEvent: { url: props.url } })}
       />
     </div>
   );

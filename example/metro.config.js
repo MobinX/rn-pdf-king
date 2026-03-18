@@ -2,6 +2,9 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 
+// Ensure NODE_ENV is set for tools like @expo/env
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
 const config = getDefaultConfig(__dirname);
 
 // npm v7+ will install ../node_modules/react and ../node_modules/react-native because of peerDependencies.
@@ -20,15 +23,10 @@ config.resolver.nodeModulesPaths = [
 
 config.resolver.extraNodeModules = {
   'rn-pdf-king': '..',
+  'react-native': path.resolve(__dirname, 'node_modules/react-native'),
+  'react': path.resolve(__dirname, 'node_modules/react'),
 };
 
 config.watchFolders = [path.resolve(__dirname, '..')];
-
-config.transformer.getTransformOptions = async () => ({
-  transform: {
-    experimentalImportSupport: false,
-    inlineRequires: true,
-  },
-});
 
 module.exports = config;

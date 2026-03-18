@@ -33,7 +33,7 @@ import Animated, {
   withSpring,
   withTiming,
   scrollTo,
-  useAnimatedRef,
+  type AnimatedRef,
 } from 'react-native-reanimated'
 import {
   ANIMATION_DURATION,
@@ -172,7 +172,11 @@ export interface UseZoomGestureProps {
   /**
    * Animated ref to parent scrollable (for UI-thread scrolling).
    */
-  parentAnimatedScrollRef?: RefObject<any>
+  parentAnimatedScrollRef?: AnimatedRef<any>
+  /**
+   * Callback fired during zoom gesture with current scale value.
+   */
+  onZoomChange?: (scale: number) => void
 }
 
 /**
@@ -748,7 +752,14 @@ export function useZoomGesture(props: UseZoomGestureProps = {}): UseZoomGestureR
         translateX.value = newTx
 
         if (onPanningUpdate)
-          runOnJS(onPanningUpdate)({ x: translateX.value, y: translateY.value, velocityX: event.velocityX, velocityY: event.velocityY })
+          runOnJS(onPanningUpdate)({
+            x: translateX.value,
+            y: translateY.value,
+            translationX: event.translationX,
+            translationY: event.translationY,
+            velocityX: event.velocityX,
+            velocityY: event.velocityY
+          })
 
         return
       }

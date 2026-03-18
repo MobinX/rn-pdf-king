@@ -8,6 +8,8 @@ declare class RnPdfKingModule extends NativeModule<RnPdfKingModuleEvents> {
   setValueAsync(value: string): Promise<void>;
   pickFile(): Promise<void>;
   loadPdf(path: string): Promise<void>;
+  getPageBitmapBase64(pageNo: number): Promise<string>;
+  getTextChars(pageNo: number): Promise<string>;
   checkInitialIntent(): Promise<boolean>;
 }
 

@@ -8,6 +8,7 @@ export type Highlight = {
 };
 
 export type RnPdfKingModuleEvents = {
+  onChange?: (event: { value: string }) => void;
   onPdfLoadStarted: () => void;
   onPdfLoadSuccess: (event: { filePath: string; fileName: string; pageCount: number }) => void;
   onPdfLoadError: (event: { message: string }) => void;
@@ -26,4 +27,6 @@ export type RnPdfKingViewProps = {
   onSelectionStarted?: (event: NativeSyntheticEvent<{}>) => void;
   onSelectionEnded?: (event: NativeSyntheticEvent<{}>) => void;
   onPreDefinedHighlightClick?: (event: NativeSyntheticEvent<{ id: string }>) => void;
+  url?: string;
+  onLoad?: (event: { nativeEvent: { url: string | undefined } }) => void;
 };
