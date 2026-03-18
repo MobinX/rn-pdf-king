@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useImperativeHandle, forwardRef } from 'react';
 import { requireNativeViewManager } from 'expo-modules-core';
 import { ViewProps, NativeSyntheticEvent, processColor } from 'react-native';
 import { Highlight } from './RnPdfKing.types';
@@ -10,6 +10,7 @@ export interface PdfPageProps extends ViewProps {
   width?: number;
   height?: number;
   preDefinedHighlights?: Highlight[];
+  preDefinedDottedHighlights?: Highlight[];
   handleColor?: string | number;
   selectionColor?: string | number;
   selectionEnabled?: boolean;
@@ -19,11 +20,16 @@ export interface PdfPageProps extends ViewProps {
   onPreDefinedHighlightClick?: (event: NativeSyntheticEvent<{ id: string }>) => void;
 }
 
-export const PdfPage: React.FC<PdfPageProps> = (props) => {
+export interface PdfPageHandle {
+  clearSelectionState: () => void;
+}
+
+export const PdfPage = forwardRef<PdfPageHandle, PdfPageProps>((props, ref) => {
   const { 
     width, 
     height, 
     preDefinedHighlights,
+    preDefinedDottedHighlights,
     handleColor,
     selectionColor,
     selectionEnabled,
@@ -34,16 +40,31 @@ export const PdfPage: React.FC<PdfPageProps> = (props) => {
     ...rest 
   } = props;
   
+  const nativeRef = useRef<any>(null);
+
+  useImperativeHandle(ref, () => ({
+    clearSelectionState: () => {
+      nativeRef.current?.clearSelection?.();
+    }
+  }));
+  
   const processedHighlights = preDefinedHighlights?.map(h => ({
+    ...h,
+    color: processColor(h.color)
+  }));
+
+  const processedDottedHighlights = preDefinedDottedHighlights?.map(h => ({
     ...h,
     color: processColor(h.color)
   }));
   
   return (
     <NativePdfView 
+      ref={nativeRef}
       pdfWidth={width} 
       pdfHeight={height} 
       preDefinedHighlights={processedHighlights}
+      preDefinedDottedHighlights={processedDottedHighlights}
       handleColor={processColor(handleColor)}
       selectionColor={processColor(selectionColor)}
       selectionEnabled={selectionEnabled}
@@ -54,4 +75,4 @@ export const PdfPage: React.FC<PdfPageProps> = (props) => {
       {...rest} 
     />
   );
-};
+});

@@ -5,6 +5,7 @@ export type Highlight = {
   startIndex: number;
   endIndex: number;
   color: ColorValue | number;
+  radiusOfDot?: number;
 };
 
 export type RnPdfKingModuleEvents = {
@@ -19,6 +20,7 @@ export type RnPdfKingViewProps = {
   pdfWidth?: number;
   pdfHeight?: number;
   preDefinedHighlights?: Highlight[];
+  preDefinedDottedHighlights?: Highlight[];
   handleColor?: ColorValue | number;
   selectionColor?: ColorValue | number;
   selectionEnabled?: boolean;

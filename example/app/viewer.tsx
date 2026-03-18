@@ -4,12 +4,14 @@ import {
   View,
   Text,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useNavigation, useRouter } from "expo-router";
 import {
   usePdfDocument,
   ZoomableList,
   ZoomablePdfPage,
+  PdfPageHandle,
 } from "rn-pdf-king";
 
 const GripHorizontal = ({ size = 20, color = "#666" }) => {
@@ -29,6 +31,52 @@ const GripHorizontal = ({ size = 20, color = "#666" }) => {
     </View>
   );
 };
+
+const PageItem = React.memo(({ item, width, setIsSelecting }: { item: number; width: number; setIsSelecting: (val: boolean) => void }) => {
+  const itemHeight = width * 1.414;
+  const pdfRef = React.useRef<PdfPageHandle>(null);
+
+  const highlights = [
+      { id: "h1", startIndex: 0, endIndex: 100, color: "rgba(255, 235, 0, 0.5)" },
+      { id: "h2", startIndex: 100, endIndex: 150, color: "#ff000088" },
+  ];
+
+  const dottedHighlights = [
+      { id: "d1", startIndex: 200, endIndex: 300, color: "blue", radiusOfDot: 5 },
+  ];
+
+  const handleSelectionChanged = (e: any) => {
+      if (e.nativeEvent.selectedText) {
+          setTimeout(() => {
+              pdfRef.current?.clearSelectionState();
+          }, 2000);
+      }
+  };
+
+  const handleHighlightClick = (e: any) => {
+      Alert.alert(`Clicked highlight: ${e.nativeEvent.id}`);
+  };
+
+  return (
+    <View style={[styles.pageWrapper, { width, height: itemHeight }]}>
+      <ZoomablePdfPage
+          ref={pdfRef}
+          pageNo={item}
+          width={width}
+          height={itemHeight}
+          preDefinedHighlights={highlights}
+          preDefinedDottedHighlights={dottedHighlights}
+          handleColor="green"
+          selectionColor="rgba(0, 255, 0, 0.3)"
+          onSelectionStarted={() => setIsSelecting(true)}
+          onSelectionEnded={() => setIsSelecting(false)}
+          onSelectionChanged={handleSelectionChanged}
+          onPreDefinedHighlightClick={handleHighlightClick}
+      />
+      <Text style={styles.pageLabel}>Page {item}</Text>
+    </View>
+  );
+});
 
 export default function ViewerPage() {
   const navigation = useNavigation();
@@ -51,27 +99,7 @@ export default function ViewerPage() {
   }, [loading, filePath]);
 
   const renderItem = ({ item, width }: { item: number; width: number }) => {
-    const itemHeight = width * 1.414;
-    const highlights = [
-        { id: "h1", startIndex: 0, endIndex: 100, color: "rgba(255, 235, 0, 0.5)" },
-        { id: "h2", startIndex: 100, endIndex: 150, color: "#ff000088" },
-    ];
-
-    return (
-      <View style={[styles.pageWrapper, { width, height: itemHeight }]}>
-        <ZoomablePdfPage
-            pageNo={item}
-            width={width}
-            height={itemHeight}
-            preDefinedHighlights={highlights}
-            handleColor="green"
-            selectionColor="rgba(0, 255, 0, 0.3)"
-            onSelectionStarted={() => setIsSelecting(true)}
-            onSelectionEnded={() => setIsSelecting(false)}
-        />
-        <Text style={styles.pageLabel}>Page {item}</Text>
-      </View>
-    );
+    return <PageItem item={item} width={width} setIsSelecting={setIsSelecting} />;
   };
 
   if (loading) {

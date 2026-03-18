@@ -45,7 +45,8 @@ data class Highlight(
     val id: String,
     val startIndex: Int,
     val endIndex: Int,
-    val color: Int // Changed to Int for legacy Color
+    val color: Int, // Changed to Int for legacy Color
+    val radiusOfDot: Float? = null
 )
 
 // --- Internal Text Extractor ---
@@ -305,6 +306,8 @@ class PdfPageView @JvmOverloads constructor(
     private var textChars: List<TextChar> = emptyList()
     var preDefinedHighlights: List<Highlight> = emptyList()
         set(value) { field = value; invalidate() }
+    var preDefinedDottedHighlights: List<Highlight> = emptyList()
+        set(value) { field = value; invalidate() }
 
     // Selection State
     private var selectionStart: Int? = null
@@ -414,6 +417,12 @@ class PdfPageView @JvmOverloads constructor(
             drawHighlightRange(canvas, highlight.startIndex, highlight.endIndex, highlightPaint)
         }
         
+        // Draw Pre-defined Dotted Highlights
+        preDefinedDottedHighlights.forEach { highlight ->
+            highlightPaint.color = highlight.color
+            drawDottedHighlightRange(canvas, highlight.startIndex, highlight.endIndex, highlight.radiusOfDot ?: 5f, highlightPaint)
+        }
+        
         // Draw Selection
         if (selectionStart != null && selectionEnd != null) {
             selectionPaint.color = selectionColor
@@ -452,6 +461,33 @@ class PdfPageView @JvmOverloads constructor(
                         r.bottom * scale // r.bottom is y+h
                     )
                     canvas.drawRect(rect, paint)
+                }
+            }
+        }
+    }
+
+    private fun drawDottedHighlightRange(canvas: Canvas, start: Int, end: Int, radius: Float, paint: Paint) {
+        val safeStart = max(0, start)
+        val safeEnd = min(textChars.size - 1, end)
+        
+        if (safeStart <= safeEnd) {
+            for (i in safeStart..safeEnd) {
+                if (i in textChars.indices) {
+                    val r = textChars[i].rect
+                    // Draw dots along the bottom of the character
+                    // We can draw one dot per char or fill the width
+                    // Let's draw dots based on width
+                    
+                    val left = r.left * scale
+                    val right = r.right * scale
+                    val bottom = r.bottom * scale
+                    val width = right - left
+                    
+                    // Center dot
+                    val cx = left + width / 2
+                    val cy = bottom + radius + 2 // Slightly below text
+                    
+                    canvas.drawCircle(cx, cy, radius, paint)
                 }
             }
         }
@@ -512,7 +548,13 @@ class PdfPageView @JvmOverloads constructor(
     }
  
     private fun getHighlightAt(index: Int): String? {
-        return preDefinedHighlights.firstOrNull { highlight ->
+        val normal = preDefinedHighlights.firstOrNull { highlight ->
+            index >= highlight.startIndex && index <= highlight.endIndex
+        }?.id
+        
+        if (normal != null) return normal
+        
+        return preDefinedDottedHighlights.firstOrNull { highlight ->
             index >= highlight.startIndex && index <= highlight.endIndex
         }?.id
     }
@@ -703,7 +745,7 @@ class PdfPageView @JvmOverloads constructor(
         return gestureHandled
     }
 
-    private fun clearSelectionState() {
+    fun clearSelectionState() {
         draggingHandle = null
         isInteractingWithSelection = false
         selectionStart = null

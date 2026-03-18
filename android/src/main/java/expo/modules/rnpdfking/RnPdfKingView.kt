@@ -168,6 +168,37 @@ class RnPdfKingView(context: Context, appContext: AppContext) : ExpoView(context
         }
         pdfPageView.preDefinedHighlights = mapped
     }
+
+    fun setDottedHighlights(highlights: List<Map<String, Any>>) {
+        val mapped = highlights.mapNotNull { map ->
+            val id = map["id"] as? String
+            val start = (map["startIndex"] as? Number)?.toInt()
+            val end = (map["endIndex"] as? Number)?.toInt()
+            
+            // Handle color specifically, it might be Double, Int, or Long
+            val colorVal = map["color"]
+            val color = if (colorVal is Number) {
+                colorVal.toInt()
+            } else {
+                null
+            }
+            
+            val radius = (map["radiusOfDot"] as? Number)?.toFloat()
+            
+            if (id != null && start != null && end != null && color != null) {
+                com.mobinx.pdfking.Highlight(id, start, end, color, radius)
+            } else {
+                null
+            }
+        }
+        pdfPageView.preDefinedDottedHighlights = mapped
+    }
+
+    fun clearSelection() {
+        post {
+            pdfPageView.clearSelectionState()
+        }
+    }
     
     fun setMode(m: String) {
         if (viewMode != m) {

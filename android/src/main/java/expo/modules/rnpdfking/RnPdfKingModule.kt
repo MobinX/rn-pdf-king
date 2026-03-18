@@ -168,6 +168,14 @@ class RnPdfKingModule : Module() {
         view.setHighlights(highlights)
       }
 
+      Prop("preDefinedDottedHighlights") { view: RnPdfKingView, highlights: List<Map<String, Any>> ->
+        view.setDottedHighlights(highlights)
+      }
+
+      AsyncFunction("clearSelection") { view: RnPdfKingView ->
+        view.clearSelection()
+      }
+
       Prop("handleColor") { view: RnPdfKingView, color: Int ->
         view.setHandleColor(color)
       }
