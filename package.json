@@ -1,6 +1,6 @@
 {
   "name": "rn-pdf-king",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The one and only best pdf library that efficiently handle 1000 page pdf with memeory mangement , easy selection , very customizable and allow pdf to edit",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -32,7 +32,16 @@
     "@types/react": "~19.1.1",
     "expo": "^55.0.5",
     "expo-module-scripts": "^55.0.2",
-    "react-native": "0.82.1"
+    "react-native": "0.82.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.6",
+    "@semantic-release/npm": "^13.1.5",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "@types/bun": "latest",
+    "conventional-changelog-conventionalcommits": "^9.3.0",
+    "semantic-release": "^25.0.3"
   },
   "peerDependencies": {
     "@shopify/flash-list": "^2.3.0",

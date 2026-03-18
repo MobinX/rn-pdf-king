@@ -1,0 +1,62 @@
+name: Release
+
+# Runs on every push to main.
+# semantic-release decides whether a release is needed based on conventional commits:
+#   feat: ...            → minor bump  (0.x.0)
+#   fix: / perf: ...     → patch bump  (0.0.x)
+#   BREAKING CHANGE: ... → major bump  (x.0.0)
+#   chore: / docs: ...   → no release
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Test › Build › Release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # create GitHub releases, push CHANGELOG/package.json
+      issues: write # comment on released issues
+      pull-requests: write # comment on released PRs
+      id-token: write # OIDC for trusted npm publishing + provenance
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
+        run: npm audit signatures
+
+      - name: Run prepublishOnly
+        run: bun run prepublishOnly
+
+
+      - name: Run prepare
+        run: bun run prepare
+
+
+
+      - name: Release
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
