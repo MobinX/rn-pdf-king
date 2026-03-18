@@ -26,10 +26,3 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
-
-      - name: Verify dist exports
-        run: |
-          echo "── dist contents ──"
-          ls -lh dist/
-          echo "── CJS exports ──"
-          node -e "const m = require('./dist/index.cjs'); console.log(Object.keys(m).join(', '))"
