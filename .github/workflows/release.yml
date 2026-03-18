@@ -9,7 +9,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - master
 
 permissions:
   contents: read
@@ -50,11 +50,8 @@ jobs:
       - name: Run prepublishOnly
         run: bun run prepublishOnly
 
-
       - name: Run prepare
         run: bun run prepare
-
-
 
       - name: Release
         run: npx semantic-release
