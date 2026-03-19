@@ -172,8 +172,8 @@ class RnPdfKingModule : Module() {
         view.setDottedHighlights(highlights)
       }
 
-      AsyncFunction("clearSelection") { view: RnPdfKingView ->
-        view.clearSelection()
+      AsyncFunction("clearSelection") { view: expo.modules.kotlin.views.ExpoView ->
+        (view as? RnPdfKingView)?.clearSelection()
       }
 
       Prop("handleColor") { view: RnPdfKingView, color: Int ->
