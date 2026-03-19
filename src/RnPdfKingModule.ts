@@ -11,6 +11,7 @@ declare class RnPdfKingModule extends NativeModule<RnPdfKingModuleEvents> {
   getPageBitmapBase64(pageNo: number): Promise<string>;
   getTextChars(pageNo: number): Promise<string>;
   checkInitialIntent(): Promise<boolean>;
+  clearAllSelections(): Promise<void>;
 }
 
 // This call loads the native module object from the JSI.

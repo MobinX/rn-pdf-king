@@ -34,7 +34,7 @@ const GripHorizontal = ({ size = 20, color = "#666" }) => {
 
 const PageItem = React.memo(({ item, width, setIsSelecting }: { item: number; width: number; setIsSelecting: (val: boolean) => void }) => {
   const itemHeight = width * 1.414;
-  const pdfRef = React.useRef<PdfPageHandle>(null);
+  const { clearAllSelections } = usePdfDocument();
 
   const highlights = [
       { id: "h1", startIndex: 0, endIndex: 100, color: "rgba(255, 235, 0, 0.5)" },
@@ -48,7 +48,7 @@ const PageItem = React.memo(({ item, width, setIsSelecting }: { item: number; wi
   const handleSelectionChanged = (e: any) => {
       if (e.nativeEvent.selectedText) {
           setTimeout(() => {
-              pdfRef.current?.clearSelectionState();
+              clearAllSelections();
           }, 2000);
       }
   };
@@ -60,7 +60,6 @@ const PageItem = React.memo(({ item, width, setIsSelecting }: { item: number; wi
   return (
     <View style={[styles.pageWrapper, { width, height: itemHeight }]}>
       <ZoomablePdfPage
-          ref={pdfRef}
           pageNo={item}
           width={width}
           height={itemHeight}

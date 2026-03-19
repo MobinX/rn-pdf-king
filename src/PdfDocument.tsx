@@ -11,6 +11,7 @@ interface PdfDocumentContextType {
   pickFile: () => Promise<void>;
   loadPdf: (path: string) => Promise<void>;
   error: string | null;
+  clearAllSelections: () => Promise<void>;
 }
 
 const PdfDocumentContext = createContext<PdfDocumentContextType | undefined>(undefined);
@@ -84,6 +85,14 @@ export const PdfDocumentProvider: React.FC<PdfDocumentProps> = ({
     }
   };
 
+  const clearAllSelections = async () => {
+    try {
+      await RnPdfKingModule.clearAllSelections();
+    } catch (e: any) {
+      console.warn("Failed to clear selections", e);
+    }
+  };
+
   return (
     <PdfDocumentContext.Provider 
       value={{ 
@@ -93,7 +102,8 @@ export const PdfDocumentProvider: React.FC<PdfDocumentProps> = ({
         fileName, 
         pickFile, 
         loadPdf,
-        error 
+        error,
+        clearAllSelections
       }}
     >
       {/* Mount hidden manager view to initialize file picker */}

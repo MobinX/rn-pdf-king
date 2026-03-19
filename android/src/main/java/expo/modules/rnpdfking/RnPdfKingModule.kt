@@ -155,6 +155,13 @@ class RnPdfKingModule : Module() {
             }
         }
 
+        AsyncFunction("clearAllSelections") {
+            CoroutineScope(Dispatchers.Main).launch {
+                 PdfKingManager.clearAllSelections()
+            }
+            return@AsyncFunction null
+        }
+
         View(RnPdfKingView::class) {
             Prop("pageNo") { view: RnPdfKingView, pageNo: Int ->
                 view.setPage(pageNo)

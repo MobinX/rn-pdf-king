@@ -19,6 +19,9 @@ class RnPdfKingModule extends NativeModule<RnPdfKingModuleEvents> {
   async checkInitialIntent(): Promise<boolean> {
     return false;
   }
+  async clearAllSelections(): Promise<void> {
+    console.warn('clearAllSelections is not implemented on web');
+  }
 }
 
 export default registerWebModule(RnPdfKingModule, 'RnPdfKingModule');

@@ -27,6 +27,8 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
 import kotlin.math.abs
+import java.util.Collections
+import java.util.WeakHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
@@ -282,6 +284,7 @@ class PdfKing(private val context: Context) {
 
 object PdfKingManager {
     private var instance: PdfKing? = null
+    private val activePages = Collections.newSetFromMap(WeakHashMap<PdfPageView, Boolean>())
     
     fun initialize(context: Context) {
         if (instance == null) {
@@ -291,6 +294,18 @@ object PdfKingManager {
     
     fun getInstance(): PdfKing {
         return instance ?: throw IllegalStateException("PdfKingManager not initialized. Call initialize(context) first.")
+    }
+    
+    fun registerPage(page: PdfPageView) {
+        activePages.add(page)
+    }
+
+    fun unregisterPage(page: PdfPageView) {
+        activePages.remove(page)
+    }
+
+    fun clearAllSelections() {
+        activePages.forEach { it.clearSelectionState() }
     }
 }
 
@@ -367,6 +382,16 @@ class PdfPageView @JvmOverloads constructor(
         
         override fun onDown(e: MotionEvent): Boolean = true
     })
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        PdfKingManager.registerPage(this)
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        PdfKingManager.unregisterPage(this)
+    }
 
     fun setContent(bmp: Bitmap, chars: List<TextChar>) {
         this.bitmap = bmp
@@ -746,6 +771,8 @@ class PdfPageView @JvmOverloads constructor(
     }
 
     fun clearSelectionState() {
+        if (selectionStart == null && selectionEnd == null) return
+        
         draggingHandle = null
         isInteractingWithSelection = false
         selectionStart = null
